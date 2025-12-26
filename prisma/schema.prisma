@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Node {
+  ip         String         @id
+  pubkey     String?
+  version    String?
+  country    String?
+  lat        Float?
+  lon        Float?
+  credits    Int            @default(0)
+  storage    Float          @default(0)
+  uptime     Int            @default(0)
+  status     String         @default("unknown")
+  isPublic   Boolean        @default(false)
+  cpuPercent Float          @default(0)
+  ramUsage   Float          @default(0)
+  ramUsed    Float          @default(0)
+  ramTotal   Float          @default(0)
+  activeStreams   Int       @default(0)
+  packetsReceived BigInt    @default(0)
+  packetsSent     BigInt    @default(0)
+  updatedAt  DateTime       @updatedAt
+  createdAt  DateTime       @default(now())
+  snapshots  NodeSnapshot[]
+}
+
+model NodeSnapshot {
+  id         Int      @id @default(autoincrement())
+  nodeIp     String
+  credits    Int
+  storage    Float
+  uptime     Int
+  cpuPercent Float
+  ramUsage   Float
+  ramUsed    Float   @default(0)
+  ramTotal   Float   @default(0)
+  activeStreams   Int      @default(0)
+  packetsReceived BigInt   @default(0)
+  packetsSent     BigInt   @default(0)
+  status     String
+  timestamp  DateTime @default(now())
+  node       Node     @relation(fields: [nodeIp], references: [ip])
+
+  @@index([nodeIp])
+}
+
+model GeoCache {
+  ip        String   @id
+  country   String
+  lat       Float
+  lon       Float
+  createdAt DateTime @default(now())
+}
+
+model ErrorLog {
+  id        Int      @id @default(autoincrement())
+  source    String   // e.g., "cron/assembler", "api/nodes"
+  phase     String   // e.g., "fetch", "upsert", "snapshot", "validation"
+  nodeId    String?  // IP or identifier of the node that caused error (if applicable)
+  error     String   // Error message
+  details   String?  // Additional error details or stack trace
+  timestamp DateTime @default(now())
+
+  @@index([source, timestamp])
+  @@index([timestamp])
+}
+
+model NetworkStats {
+  id            Int      @id @default(autoincrement())
+  activeNodes   Int
+  inactiveNodes Int
+  totalStorage  Float    // In PB or GB as consistent with other stats
+  totalCredits  BigInt // Using BigInt for large aggregate values
+  timestamp     DateTime @default(now())
+
+  @@index([timestamp])
+}

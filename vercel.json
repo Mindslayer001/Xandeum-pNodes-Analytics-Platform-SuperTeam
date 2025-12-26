@@ -1,0 +1,12 @@
+{
+    "crons": [
+        {
+            "path": "/api/cron/stats-updater",
+            "schedule": "*/5 * * * *"
+        },
+        {
+            "path": "/api/cron/gossip-sync",
+            "schedule": "*/15 * * * *"
+        }
+    ]
+}
