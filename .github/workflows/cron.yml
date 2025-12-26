@@ -1,0 +1,22 @@
+name: Network Stats Cron
+
+on:
+  schedule:
+    - cron: '*/5 * * * *' # Run every 5 minutes
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  run-crons:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Stats Updater
+        run: |
+          curl -s -f -L "${{ secrets.APP_URL }}/api/cron/stats-updater" \
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" || echo "Failed to trigger stats-updater"
+
+      - name: Trigger Gossip Sync
+        run: |
+          # Running gossip sync slightly after to avoid DB lock usage overlap if any
+          sleep 10
+          curl -s -f -L "${{ secrets.APP_URL }}/api/cron/gossip-sync" \
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" || echo "Failed to trigger gossip-sync"

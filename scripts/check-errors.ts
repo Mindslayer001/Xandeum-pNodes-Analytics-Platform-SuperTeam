@@ -31,7 +31,7 @@ async function testErrorLogs() {
         _count: true,
         orderBy: {
             _count: {
-                _all: 'desc'
+                timestamp: 'desc'
             }
         }
     });
