@@ -122,7 +122,14 @@ export default function Dashboard() {
             {/* Design B: Split Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                {/* Left Panel: KPIs */}
+                {/* Left Panel: Map */}
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="h-[400px] border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm relative z-0">
+                        <Map nodes={filteredNodes} />
+                    </div>
+                </div>
+
+                {/* Right Panel: KPIs */}
                 <div className="lg:col-span-1 space-y-4">
                     <StatsCard
                         title="Total Storage"
@@ -146,14 +153,6 @@ export default function Dashboard() {
                         subtext="Network Average"
                         icon={Globe}
                     />
-                </div>
-
-                {/* Right Panel: Map */}
-                {/* Right Panel: Map */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="h-[400px] border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm relative z-0">
-                        <Map nodes={nodes} />
-                    </div>
                 </div>
             </div>
 
@@ -278,8 +277,8 @@ export default function Dashboard() {
                                 >
                                     <td className="px-6 py-4">
                                         <div className={`inline-flex items-center justify-center min-w-[3rem] px-2 py-1 rounded-md text-xs font-bold ${node.score > 0.75 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                node.score > 0.40 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                                    'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                                            node.score > 0.40 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                                'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
                                             }`}>
                                             {node.score.toFixed(2)}
                                         </div>
