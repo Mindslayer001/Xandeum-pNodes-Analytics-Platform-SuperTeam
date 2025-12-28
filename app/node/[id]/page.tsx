@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import useSWR from 'swr';
 import { ArrowLeft, Server, Activity, Database, Clock, MapPin, Cpu, HardDrive } from 'lucide-react';
 import Link from 'next/link';
@@ -9,6 +10,10 @@ import { useParams } from 'next/navigation';
 
 // Dynamic import for graphs to avoid hydration issues with Recharts
 const NodeGraphs = dynamic(() => import('@/components/NodeGraphs'), { ssr: false });
+const Map = dynamic(() => import('@/components/Map'), {
+    ssr: false,
+    loading: () => <div className="h-[300px] w-full bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-xl flex items-center justify-center text-zinc-400">Loading Map...</div>
+});
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
@@ -22,6 +27,9 @@ export default function NodeDetailsPage() {
 
     const node = response?.node;
     const history = response?.history || [];
+
+    // Create single-node array for the map
+    const mapNodes = useMemo(() => node ? [node] : [], [node]);
 
     if (isLoading) {
         return (
@@ -60,8 +68,8 @@ export default function NodeDetailsPage() {
                             <div className="flex items-center gap-3">
                                 <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{node.ip}</h1>
                                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${(node.status === 'active' || node.status === 'Active')
-                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                     }`}>
                                     {node.status}
                                 </span>
@@ -103,6 +111,11 @@ export default function NodeDetailsPage() {
                         </div>
                         <div className="font-semibold text-lg">{node.credits}</div>
                     </div>
+                </div>
+
+                {/* Map Section */}
+                <div className="h-[300px] border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm relative z-0">
+                    <Map nodes={mapNodes} />
                 </div>
 
                 {/* Charts */}

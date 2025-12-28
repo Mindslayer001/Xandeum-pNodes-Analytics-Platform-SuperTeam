@@ -68,12 +68,18 @@ export default function Map({ nodes }: MapProps) {
                 {nodes.map((node, idx) => {
                     if (!node.lat || !node.lon) return null;
 
+                    // Deterministic jitter to prevent exact overlap
+                    const jitterAmount = 0.0005; // Approx 50m
+                    const hash = node.ip.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+                    const latJitter = ((hash % 100) / 100 - 0.5) * jitterAmount;
+                    const lonJitter = (((hash >> 8) % 100) / 100 - 0.5) * jitterAmount;
+
                     const color = getColor(node.score);
 
                     return (
                         <CircleMarker
                             key={node.ip + idx}
-                            center={[node.lat, node.lon]}
+                            center={[node.lat + latJitter, node.lon + lonJitter]}
                             radius={6}
                             pathOptions={{
                                 fillColor: color,

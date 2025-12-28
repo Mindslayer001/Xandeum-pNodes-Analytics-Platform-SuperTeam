@@ -9,11 +9,11 @@ export async function GET(request: Request) {
         // Parse query parameters
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page') || '1');
-        const limit = parseInt(searchParams.get('limit') || '50');
+        const limit = parseInt(searchParams.get('limit') || '1000');
 
         // Validate parameters
         const validPage = Math.max(1, page);
-        const validLimit = Math.min(Math.max(1, limit), 100); // Max 100 items per page
+        const validLimit = Math.min(Math.max(1, limit), 2000); // Increased max limit
         const skip = (validPage - 1) * validLimit;
 
         // Get total count for pagination metadata
