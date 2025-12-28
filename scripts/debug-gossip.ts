@@ -35,7 +35,7 @@ async function main() {
 
         // 2. Process Nodes
         console.log("Processing nodes...");
-        const validNodes = [];
+        const validNodes: any[] = [];
         let count = 0;
 
         for (const pod of rawPods) {
