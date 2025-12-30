@@ -205,8 +205,7 @@ export async function POST() {
 
             if (snapshots.length > 0) {
                 const result = await db.nodeSnapshot.createMany({
-                    data: snapshots,
-                    skipDuplicates: true // Skip if somehow duplicates exist
+                    data: snapshots
                 });
                 snapshotsCreated = result.count;
                 console.log(`✅ Created ${snapshotsCreated} snapshots`);

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { extractIp, ipToRpcUrl, rpcCall, getCredits, resolveGeoLocation } from '@/lib/xandeum-client';
 import { refreshNetworkStatsCache } from '@/lib/network-stats-service';
+import { refreshNodesCache } from '@/lib/nodes-service';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 minutes max
 
@@ -312,11 +313,9 @@ export async function POST() {
                     }
                 }
 
-                // Step 4c: Bulk insert snapshots
                 if (snapshots.length > 0) {
                     const snapshotResult = await tx.nodeSnapshot.createMany({
-                        data: snapshots,
-                        skipDuplicates: true
+                        data: snapshots
                     });
                     snapshotsCreated = snapshotResult.count;
                     console.log(`  ✅ Created ${snapshotsCreated} snapshots`);
@@ -347,11 +346,14 @@ export async function POST() {
 
             console.log("✅ Transaction committed successfully");
 
-            // Refresh the atomic in-memory cache for stats
+            // Refresh caches
             try {
-                await refreshNetworkStatsCache();
+                await Promise.all([
+                    refreshNetworkStatsCache(),
+                    refreshNodesCache()
+                ]);
             } catch (cacheError) {
-                console.error("⚠️ Failed to refresh stats cache:", cacheError);
+                console.error("⚠️ Failed to refresh caches:", cacheError);
                 // Don't fail the request, just log
             }
 

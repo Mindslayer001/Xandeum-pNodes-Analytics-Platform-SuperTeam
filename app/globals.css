@@ -1,40 +1,59 @@
 @import "tailwindcss";
 
 :root {
-  /* Light Mode - Clean, Off-White, Teal Accents */
-  --background: #F8FAFC; /* Slate-50 */
-  --foreground: #0F172A; /* Slate-900 */
-  
-  --primary: #0D9488; /* Teal-600 */
+  /* Strict Minimalist Theme */
+  /* Backgrounds: High Contrast Greyscale */
+  --background: #FFFFFF;
+  --foreground: #171717;
+  /* Neutral-900 */
+
+  /* Primary: Emerald (Single accent color) */
+  --primary: #059669;
+  /* Emerald-600 */
   --primary-foreground: #FFFFFF;
 
-  --secondary: #CCFBF1; /* Teal-100 */
-  --secondary-foreground: #0F766E; /* Teal-700 */
+  /* Secondary/Muted: Functional Greys */
+  --secondary: #F5F5F5;
+  /* Neutral-100 */
+  --secondary-foreground: #171717;
 
   --card: #FFFFFF;
-  --card-foreground: #0F172A;
+  --card-foreground: #171717;
 
-  --border: #E2E8F0; /* Slate-200 */
-  --muted: #64748B; /* Slate-500 */
+  /* Borders: Subtle but visible */
+  --border: #E5E5E5;
+  /* Neutral-200 */
+  --muted: #737373;
+  /* Neutral-500 */
+
+  /* Radii: Boring and consistent */
+  --radius: 0.5rem;
+  /* 8px */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Dark Mode - Deep Slate, Emerald Accents */
-    --background: #020617; /* Slate-950 */
-    --foreground: #F8FAFC; /* Slate-50 */
+    /* Dark Mode: Deep Neutral */
+    --background: #0A0A0A;
+    /* Neutral-950 */
+    --foreground: #EDEDED;
+    /* Neutral-50 */
 
-    --primary: #14B8A6; /* Teal-500 */
-    --primary-foreground: #020617;
+    --primary: #10B981;
+    /* Emerald-500 */
+    --primary-foreground: #000000;
 
-    --secondary: #115E59; /* Teal-800 */
-    --secondary-foreground: #CCFBF1;
+    --secondary: #262626;
+    /* Neutral-800 */
+    --secondary-foreground: #EDEDED;
 
-    --card: #0F172A; /* Slate-900 */
-    --card-foreground: #F8FAFC;
+    --card: #0A0A0A;
+    --card-foreground: #EDEDED;
 
-    --border: #1E293B; /* Slate-800 */
-    --muted: #94A3B8; /* Slate-400 */
+    --border: #262626;
+    /* Neutral-800 */
+    --muted: #A3A3A3;
+    /* Neutral-400 */
   }
 }
 
@@ -49,13 +68,17 @@
   --color-card-foreground: var(--card-foreground);
   --color-border: var(--border);
   --color-muted: var(--muted);
-  
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --font-sans: var(--font-inter);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }

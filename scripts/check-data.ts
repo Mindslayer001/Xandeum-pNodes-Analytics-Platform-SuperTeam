@@ -27,6 +27,23 @@ async function checkData() {
     });
     console.log("\nStatus Counts:", statusCounts);
 
+    // Check Snapshots
+    const snapshotCount = await db.nodeSnapshot.count();
+    console.log(`\nTotal Snapshots: ${snapshotCount}`);
+
+    // Check latest update
+    const latestNode = await db.node.findFirst({
+        orderBy: { updatedAt: 'desc' },
+        select: { updatedAt: true, ip: true }
+    });
+    console.log(`\nLatest Node Update: ${latestNode?.updatedAt?.toISOString()} (${latestNode?.ip})`);
+
+    const latestSnapshot = await db.nodeSnapshot.findFirst({
+        orderBy: { timestamp: 'desc' },
+        select: { timestamp: true }
+    });
+    console.log(`Latest Snapshot: ${latestSnapshot?.timestamp?.toISOString()}`);
+
     await db.$disconnect();
 }
 

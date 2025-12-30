@@ -39,10 +39,10 @@ function CompareContent() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-teal-600 border-r-transparent"></div>
-                    <p className="text-zinc-500">Loading Comparison...</p>
+                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+                    <p className="text-muted-foreground">Loading Comparison...</p>
                 </div>
             </div>
         );
@@ -50,10 +50,10 @@ function CompareContent() {
 
     if (compareNodes.length === 0) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-zinc-50 dark:bg-black">
-                <h1 className="text-2xl font-bold mb-2">No Validators Selected</h1>
-                <p className="text-zinc-500 mb-6">Select validators from the dashboard to compare them.</p>
-                <Link href="/" className="bg-teal-600 text-white px-6 py-2 rounded-full font-medium hover:bg-teal-500 transition-colors">
+            <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-background">
+                <h1 className="text-2xl font-bold mb-2 text-foreground">No Validators Selected</h1>
+                <p className="text-muted-foreground mb-6">Select validators from the dashboard to compare them.</p>
+                <Link href="/" className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors">
                     Go to Dashboard
                 </Link>
             </div>
@@ -61,38 +61,38 @@ function CompareContent() {
     }
 
     return (
-        <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-4 md:p-8 pb-32">
+        <div className="min-h-screen bg-background p-4 md:p-8 pb-32">
             <div className="max-w-7xl mx-auto space-y-8">
 
                 {/* Header */}
                 <div className="flex items-center gap-4">
-                    <Link href="/" className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
-                        <ArrowLeft size={20} className="text-zinc-600 dark:text-zinc-400" />
+                    <Link href="/" className="p-2 hover:bg-secondary rounded-lg transition-colors">
+                        <ArrowLeft size={20} className="text-muted-foreground" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Compare Validators</h1>
-                        <p className="text-zinc-500 text-sm">Comparing {compareNodes.length} nodes</p>
+                        <h1 className="text-2xl font-bold text-foreground">Compare Validators</h1>
+                        <p className="text-muted-foreground text-sm">Comparing {compareNodes.length} nodes</p>
                     </div>
                 </div>
 
                 {/* Comparison Table */}
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+                <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left">
-                            <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400">
+                            <thead className="bg-muted/50 text-muted-foreground">
                                 <tr>
                                     <th className="px-6 py-4 font-medium min-w-[200px]">Feature</th>
                                     {compareNodes.map(node => (
                                         <th key={node.ip} className="px-6 py-4 font-medium min-w-[200px]">
                                             <div className="flex items-center gap-3">
                                                 <div
-                                                    className="h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-inner"
+                                                    className="h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-xs"
                                                     style={{ backgroundColor: getAvatarColor(node.ip) }}
                                                 >
                                                     {node.ip.split('.')[0].slice(0, 2)}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-zinc-900 dark:text-white font-mono">{node.ip}</span>
+                                                    <span className="text-foreground font-mono">{node.ip}</span>
                                                     <span className="text-[10px] font-normal opacity-75">{node.country}</span>
                                                 </div>
                                             </div>
@@ -100,16 +100,16 @@ function CompareContent() {
                                     ))}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                            <tbody className="divide-y divide-border">
 
                                 {/* Status */}
                                 <tr>
-                                    <td className="px-6 py-4 font-medium text-zinc-500"><Activity size={16} className="inline mr-2" /> Status</td>
+                                    <td className="px-6 py-4 font-medium text-muted-foreground"><Activity size={16} className="inline mr-2" /> Status</td>
                                     {compareNodes.map(node => (
                                         <td key={node.ip} className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border ${node.status === 'active'
-                                                ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400'
-                                                : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'}`}>
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide border ${node.status === 'active'
+                                                ? 'bg-transparent text-primary border-primary/20'
+                                                : 'bg-secondary text-muted-foreground border-transparent'}`}>
                                                 {node.status}
                                             </span>
                                         </td>
@@ -125,9 +125,9 @@ function CompareContent() {
 
                                 {/* Credits */}
                                 <tr>
-                                    <td className="px-6 py-4 font-medium text-zinc-500"><Activity size={16} className="inline mr-2" /> Credits</td>
+                                    <td className="px-6 py-4 font-medium text-muted-foreground"><Activity size={16} className="inline mr-2" /> Credits</td>
                                     {compareNodes.map(node => (
-                                        <td key={node.ip} className="px-6 py-4 font-mono text-zinc-700 dark:text-zinc-300">
+                                        <td key={node.ip} className="px-6 py-4 font-mono text-foreground">
                                             {node.credits.toLocaleString()}
                                         </td>
                                     ))}
@@ -135,9 +135,9 @@ function CompareContent() {
 
                                 {/* Storage */}
                                 <tr>
-                                    <td className="px-6 py-4 font-medium text-zinc-500"><Database size={16} className="inline mr-2" /> Storage</td>
+                                    <td className="px-6 py-4 font-medium text-muted-foreground"><Database size={16} className="inline mr-2" /> Storage</td>
                                     {compareNodes.map(node => (
-                                        <td key={node.ip} className="px-6 py-4 font-mono text-zinc-700 dark:text-zinc-300">
+                                        <td key={node.ip} className="px-6 py-4 font-mono text-foreground">
                                             {node.storage.toFixed(2)} GB
                                         </td>
                                     ))}
@@ -145,9 +145,9 @@ function CompareContent() {
 
                                 {/* Uptime */}
                                 <tr>
-                                    <td className="px-6 py-4 font-medium text-zinc-500"><Clock size={16} className="inline mr-2" /> Uptime</td>
+                                    <td className="px-6 py-4 font-medium text-muted-foreground"><Clock size={16} className="inline mr-2" /> Uptime</td>
                                     {compareNodes.map(node => (
-                                        <td key={node.ip} className="px-6 py-4 font-mono text-zinc-700 dark:text-zinc-300">
+                                        <td key={node.ip} className="px-6 py-4 font-mono text-foreground">
                                             {(node.uptime / 3600).toFixed(1)} hours
                                         </td>
                                     ))}
@@ -155,9 +155,9 @@ function CompareContent() {
 
                                 {/* Version */}
                                 <tr>
-                                    <td className="px-6 py-4 font-medium text-zinc-500"><Server size={16} className="inline mr-2" /> Version</td>
+                                    <td className="px-6 py-4 font-medium text-muted-foreground"><Server size={16} className="inline mr-2" /> Version</td>
                                     {compareNodes.map(node => (
-                                        <td key={node.ip} className="px-6 py-4 font-mono text-zinc-700 dark:text-zinc-300">
+                                        <td key={node.ip} className="px-6 py-4 font-mono text-foreground">
                                             {node.version || 'Unknown'}
                                         </td>
                                     ))}
@@ -165,9 +165,9 @@ function CompareContent() {
 
                                 {/* Location */}
                                 <tr>
-                                    <td className="px-6 py-4 font-medium text-zinc-500"><MapPin size={16} className="inline mr-2" /> Location</td>
+                                    <td className="px-6 py-4 font-medium text-muted-foreground"><MapPin size={16} className="inline mr-2" /> Location</td>
                                     {compareNodes.map(node => (
-                                        <td key={node.ip} className="px-6 py-4 text-zinc-700 dark:text-zinc-300">
+                                        <td key={node.ip} className="px-6 py-4 text-foreground">
                                             {node.country || 'Unknown'}
                                         </td>
                                     ))}
@@ -180,11 +180,11 @@ function CompareContent() {
 
                 {/* Map Section */}
                 <div className="space-y-4">
-                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                        <MapPin className="text-teal-600" />
+                    <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                        <MapPin className="text-primary" />
                         Node Locations
                     </h2>
-                    <div className="h-[400px] border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm relative z-0">
+                    <div className="h-[400px] border border-border rounded-lg overflow-hidden relative z-0">
                         <Map nodes={compareNodes} />
                     </div>
                 </div>

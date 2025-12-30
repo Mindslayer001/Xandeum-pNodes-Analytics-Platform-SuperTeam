@@ -42,21 +42,21 @@ export default function Map({ nodes }: MapProps) {
     };
 
     return (
-        <div className="h-[400px] w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 z-0 relative group">
+        <div className="h-[400px] w-full rounded-lg overflow-hidden border border-border z-0 relative group">
             {/* Map Controls / Legend Overlay */}
-            <div className="absolute top-4 right-4 z-[500] bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 text-xs space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="font-semibold text-zinc-800 dark:text-zinc-200 mb-1">Node Score</div>
+            <div className="absolute top-4 right-4 z-[500] bg-background/90 backdrop-blur-sm p-3 rounded-lg border border-border text-xs space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="font-semibold text-foreground mb-1">Node Score</div>
                 <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                    <span className="text-zinc-600 dark:text-zinc-400">High (&gt;0.75)</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span className="text-muted-foreground">High (&gt;0.75)</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-                    <span className="text-zinc-600 dark:text-zinc-400">Medium (&gt;0.40)</span>
+                    <span className="text-muted-foreground">Medium (&gt;0.40)</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                    <span className="text-zinc-600 dark:text-zinc-400">Low (&le;0.40)</span>
+                    <span className="text-muted-foreground">Low (&le;0.40)</span>
                 </div>
             </div>
 

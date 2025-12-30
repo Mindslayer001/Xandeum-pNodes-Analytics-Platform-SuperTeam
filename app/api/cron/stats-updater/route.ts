@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getStats } from '@/lib/xandeum-client';
 import { refreshNetworkStatsCache } from '@/lib/network-stats-service';
+import { refreshNodesCache } from '@/lib/nodes-service';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 minutes max
@@ -28,23 +29,25 @@ export async function POST() {
     const errors: Array<{ node: string; error: string; phase: string }> = [];
     let nodesUpdated = 0;
     let snapshotsCreated = 0;
-    let nodesProcessed = 0;
 
     // Stats counters
     let activeNodesCount = 0;
     let inactiveNodesCount = 0;
     let totalNetworkStorage = 0;
-    let totalNetworkCredits = BigInt(0); // Using BigInt for credits to match schema
+    let totalNetworkCredits = BigInt(0);
 
     try {
         console.log("📊 Stats Updater Triggered");
 
-        // Get all nodes from database to update their stats
+        // Get all active nodes from database to update their stats
         const nodes = await db.node.findMany({
+            where: {
+                status: 'active'
+            },
             select: {
                 ip: true,
                 pubkey: true,
-                credits: true // Need credits for aggregation
+                credits: true
             }
         });
 
@@ -52,9 +55,7 @@ export async function POST() {
             console.warn("⚠️ No nodes found in database");
             return NextResponse.json({
                 success: false,
-                message: "No nodes found in database",
-                nodesUpdated: 0,
-                errors: []
+                message: "No nodes found in database"
             });
         }
 
@@ -62,68 +63,83 @@ export async function POST() {
 
         const snapshots: any[] = [];
 
-        // Process nodes individually with progressive updates
-        for (const node of nodes) {
-            nodesProcessed++;
+        // BATCH PROCESSING CONFIG
+        const BATCH_SIZE = 10; // Process 10 nodes concurrently
+        const chunks = [];
+        for (let i = 0; i < nodes.length; i += BATCH_SIZE) {
+            chunks.push(nodes.slice(i, i + BATCH_SIZE));
+        }
 
-            try {
-                // Fetch stats for this node
-                // IPs are now stored without ports, so append :6000 for RPC call
-                const stats = await getStats(`${node.ip}:6000`);
+        console.log(`🚀 Processing in ${chunks.length} batches of ${BATCH_SIZE}...`);
 
-                if (!stats) {
-                    // No stats available - mark as inactive but don't fail
+        for (let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i];
+
+            // Process batch in parallel
+            await Promise.all(chunk.map(async (node) => {
+                try {
+                    // Fetch stats with timeout in client to avoid hanging
+                    const stats = await getStats(`${node.ip}:6000`);
+
+                    if (!stats) {
+                        // Mark inactive
+                        await db.node.update({
+                            where: { ip: node.ip },
+                            data: { status: 'inactive', updatedAt: new Date() }
+                        });
+                        inactiveNodesCount++;
+
+                        // Inactive Snapshot
+                        snapshots.push({
+                            nodeIp: node.ip,
+                            credits: node.credits || 0,
+                            storage: 0,
+                            uptime: 0,
+                            status: 'inactive',
+                            cpuPercent: 0,
+                            ramUsage: 0,
+                            ramUsed: 0,
+                            ramTotal: 0,
+                            activeStreams: 0,
+                            packetsReceived: 0,
+                            packetsSent: 0,
+                            timestamp: new Date()
+                        });
+                        return;
+                    }
+
+                    // Active Node Processing
+                    activeNodesCount++;
+                    const storageVal = stats.fileSize ? stats.fileSize / (1024 ** 3) : 0; // GB
+                    totalNetworkStorage += storageVal;
+                    totalNetworkCredits += BigInt(node.credits || 0);
+
+                    // Update DB
                     await db.node.update({
                         where: { ip: node.ip },
                         data: {
-                            status: 'inactive',
+                            status: 'active',
+                            cpuPercent: stats.cpuPercent || 0,
+                            ramUsage: stats.ramPercent || 0,
+                            ramUsed: stats.ramUsed || 0,
+                            ramTotal: stats.ramTotal || 0,
+                            activeStreams: stats.activeStreams || 0,
+                            packetsReceived: stats.packetsReceived || 0,
+                            packetsSent: stats.packetsSent || 0,
+                            uptime: stats.uptime || 0,
+                            storage: storageVal,
                             updatedAt: new Date()
                         }
                     });
 
-                    inactiveNodesCount++;
+                    nodesUpdated++;
 
-                    // Create snapshot for inactive node (0 values) to maintain history
+                    // Active Snapshot
                     snapshots.push({
                         nodeIp: node.ip,
                         credits: node.credits || 0,
-                        storage: 0,
-                        uptime: 0,
-                        status: 'inactive',
-                        cpuPercent: 0,
-                        ramUsage: 0,
-                        ramUsed: 0,
-                        ramTotal: 0,
-                        activeStreams: 0,
-                        packetsReceived: 0,
-                        packetsSent: 0,
-                        timestamp: new Date()
-                    });
-
-                    continue;
-                }
-
-                // Stats available - node is active
-                activeNodesCount++;
-                const storageInPB = stats.fileSize ? stats.fileSize / (1024 ** 5) : 0; // PB based on 1024^5? Or standard GB? 
-                // Previous code: stats.fileSize / (1024 ** 3) for storage field (Float). 
-                // Let's stick to what was there: stats.fileSize / (1024 ** 3). Wait, previously it was:
-                // storage: stats.fileSize ? stats.fileSize / (1024 ** 3) : 0
-                // Dashboard displays "PB". 
-                // If the value is stored as PB, the division should be 1024^5?
-                // Actually, let's look at the Dashboard again: value={`${stats.totalStorage.toFixed(2)} PB`}
-                // If the individual node storage is small, adding them up to PB might be small.
-                // Let's keep consistency with previous code: 1024**3 (GB). If the dashboard says PB, maybe it expects the sum to be large or the unit label is just optimistic.
-                // Actually, let's stick to the previous code's logic for individual nodes.
-
-                const storageVal = stats.fileSize ? stats.fileSize / (1024 ** 3) : 0; // GB
-                totalNetworkStorage += storageVal;
-                totalNetworkCredits += BigInt(node.credits || 0);
-
-                // Update node with fresh stats
-                await db.node.update({
-                    where: { ip: node.ip },
-                    data: {
+                        storage: storageVal,
+                        uptime: stats.uptime || 0,
                         status: 'active',
                         cpuPercent: stats.cpuPercent || 0,
                         ramUsage: stats.ramPercent || 0,
@@ -132,91 +148,33 @@ export async function POST() {
                         activeStreams: stats.activeStreams || 0,
                         packetsReceived: stats.packetsReceived || 0,
                         packetsSent: stats.packetsSent || 0,
-                        uptime: stats.uptime || 0,
-                        storage: storageVal,
-                        updatedAt: new Date()
-                    }
-                });
+                        timestamp: new Date()
+                    });
 
-                nodesUpdated++;
-
-                // Collect snapshot data
-                snapshots.push({
-                    nodeIp: node.ip,
-                    credits: node.credits || 0,
-                    storage: storageVal,
-                    uptime: stats.uptime || 0,
-                    status: 'active',
-                    cpuPercent: stats.cpuPercent || 0,
-                    ramUsage: stats.ramPercent || 0,
-                    ramUsed: stats.ramUsed || 0,
-                    ramTotal: stats.ramTotal || 0,
-                    activeStreams: stats.activeStreams || 0,
-                    packetsReceived: stats.packetsReceived || 0,
-                    packetsSent: stats.packetsSent || 0,
-                    timestamp: new Date()
-                });
-
-                // Log progress every 50 nodes
-                if (nodesProcessed % 50 === 0) {
-                    console.log(`  Progress: ${nodesProcessed}/${nodes.length} nodes processed, ${nodesUpdated} updated`);
+                } catch (nodeError: any) {
+                    console.error(`❌ Failed to update ${node.ip}:`, nodeError.message);
+                    errors.push({ node: node.ip, error: nodeError.message, phase: 'update' });
+                    logErrorToDb('cron/stats-updater', 'update', nodeError.message, node.ip).catch(() => { });
                 }
+            }));
 
-            } catch (nodeError: any) {
-                console.error(`❌ Failed to update stats for ${node.ip}:`, nodeError.message);
-                errors.push({
-                    node: node.ip,
-                    error: nodeError.message,
-                    phase: 'stats-update'
-                });
-
-                // Even on error, if we can't reach it, it might be inactive?
-                // For safety, let's treat error as potential inactive but NOT update status to avoid flapping on transient errors.
-                // But we should probably NOT create a snapshot if we aren't sure. 
-
-                // Log to database (fire and forget)
-                logErrorToDb(
-                    'cron/stats-updater',
-                    'stats-update',
-                    nodeError.message,
-                    node.ip,
-                    nodeError.stack
-                ).catch(() => { });
-
-                // Continue processing other nodes
-            }
+            // Optional: Small delay between batches to breath? 
+            // await new Promise(r => setTimeout(r, 100));
         }
 
-        console.log(`✅ Processed ${nodesProcessed}/${nodes.length} nodes. Active: ${activeNodesCount}, Inactive: ${inactiveNodesCount}`);
+        console.log(`✅ Processed all batches. Active: ${activeNodesCount}, Inactive: ${inactiveNodesCount}`);
 
-        // Bulk insert snapshots at the end
+        // Bulk insert snapshots
         if (snapshots.length > 0) {
             try {
-                const result = await db.nodeSnapshot.createMany({
-                    data: snapshots,
-                    skipDuplicates: true
-                });
+                const result = await db.nodeSnapshot.createMany({ data: snapshots });
                 snapshotsCreated = result.count;
-                console.log(`✅ Created ${snapshotsCreated} snapshots`);
-            } catch (snapshotError: any) {
-                console.error("❌ Failed to create snapshots:", snapshotError);
-                errors.push({
-                    node: 'batch',
-                    error: snapshotError.message,
-                    phase: 'snapshot'
-                });
-
-                logErrorToDb(
-                    'cron/stats-updater',
-                    'snapshot',
-                    snapshotError.message,
-                    undefined,
-                    snapshotError.stack
-                ).catch(() => { });
+            } catch (err: any) {
+                console.error("Snapshot error:", err);
             }
         }
 
-        // Create NetworkStats record
+        // Network Stats
         try {
             await db.networkStats.create({
                 data: {
@@ -227,60 +185,27 @@ export async function POST() {
                     timestamp: new Date()
                 }
             });
-            console.log(`✅ Created NetworkStats record`);
 
-            // Refresh the atomic in-memory cache for stats
-            try {
-                await refreshNetworkStatsCache();
-            } catch (cacheError) {
-                console.error("⚠️ Failed to refresh stats cache:", cacheError);
-            }
+            // Refresh Caches
+            await Promise.allSettled([
+                refreshNetworkStatsCache(),
+                refreshNodesCache()
+            ]);
 
-        } catch (statsError: any) {
-            console.error("❌ Failed to create network stats:", statsError);
-            logErrorToDb('cron/stats-updater', 'network-stats', statsError.message).catch(() => { });
+        } catch (err: any) {
+            console.error("Network stats error:", err);
         }
 
         const duration = Date.now() - startTime;
-        const result = {
+        return NextResponse.json({
             success: true,
-            nodesProcessed,
             nodesUpdated,
             snapshotsCreated,
-            activeNodes: activeNodesCount,
-            inactiveNodes: inactiveNodesCount,
-            totalNodes: nodes.length,
-            errors: errors.length > 0 ? errors : undefined,
             durationMs: duration,
-            message: `Stats updater completed: ${nodesUpdated}/${nodes.length} nodes updated, ${snapshotsCreated} snapshots created`
-        };
-
-        console.log(`✅ ${result.message} (${duration}ms)`);
-        return NextResponse.json(result);
+            message: `Completed in ${duration}ms`
+        });
 
     } catch (error: any) {
-        const duration = Date.now() - startTime;
-        console.error("❌ Stats updater critical failure:", error);
-
-        // Log critical failure to database
-        await logErrorToDb(
-            'cron/stats-updater',
-            'critical',
-            error.message,
-            undefined,
-            error.stack
-        );
-
-        return NextResponse.json({
-            success: false,
-            error: "Critical failure in stats updater",
-            details: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-            nodesProcessed,
-            nodesUpdated,
-            snapshotsCreated,
-            errors,
-            durationMs: duration
-        }, { status: 500 });
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
